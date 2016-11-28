@@ -1,5 +1,5 @@
 'use strict';
-console.log("------------server app start--------------")
+console.log("------------server api start--------------")
 var loopback = require('loopback');
 var boot = require('loopback-boot');
 

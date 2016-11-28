@@ -1,18 +1,25 @@
 var loopback = require('loopback');
 var boot = require('loopback-boot');
 var redis=require("redis");
+
 //var app2=require("express");
 
 console.log(io)
 var app = module.exports = loopback();
 var http=require("http").Server(app);
 var io=require("socket.io")(http);
+var roleService=require('../service/roleService');
 var tagService=require('../service/tagService');
 var userService=require('../service/userService');
+var adminService=require("../service/adminService")
 //var Tag=require("../../common/models/tag");
 app.get('/', function(req, res){
   res.send('hello world');
 });
+app.get("/role/createTable",function(req,res){
+	roleService.createTable();
+	res.send('success');
+})
 app.get("/tag/add",function(req,res){
 		console.log("----------------/tag/add---------------")
 tagService.insert([{id:1,name:'泛投资',img:'ion-medkit',sel:false},
@@ -46,7 +53,7 @@ var onlineCount = 0;
 
 io.on('connection', function(socket){
 	console.log(' connected.....');
-	
+	adminService.startListenClient(io,socket);
 	//监听新用户加入
 	socket.on('login', function(obj){
 		//将新加入用户的唯一标识当作socket的名称，后面退出的时候会用到

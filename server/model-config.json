@@ -43,5 +43,11 @@
     "public": true,
     "$promise": {},
     "$resolved": true
+  },
+  "role": {
+    "dataSource": "wujf",
+    "public": true,
+    "$promise": {},
+    "$resolved": true
   }
 }
