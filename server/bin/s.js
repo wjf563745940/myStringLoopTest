@@ -1,10 +1,10 @@
 var loopback = require('loopback');
 var boot = require('loopback-boot');
 var redis=require("redis");
-
+var express = require('express');
+var bodyParser = require('body-parser');
 //var app2=require("express");
-
-console.log(io)
+var app2 = express();
 var app = module.exports = loopback();
 var http=require("http").Server(app);
 var io=require("socket.io")(http);
@@ -13,13 +13,41 @@ var tagService=require('../service/tagService');
 var userService=require('../service/userService');
 var adminService=require("../service/adminService")
 //var Tag=require("../../common/models/tag");
+app.use(function(req, res, next){
+  if (req.is('text/*')) {
+    req.text = '';
+    req.setEncoding('utf8');
+    req.on('data', function(chunk){ req.text += chunk });
+    req.on('end', next);
+  } else {
+    next();
+  }
+});
 app.get('/', function(req, res){
   res.send('hello world');
 });
 app.get("/role/createTable",function(req,res){
 	roleService.createTable();
 	res.send('success');
+});
+app.get("/role/add",function(req,res){
+	roleService.insert([{"id":2,"role_name":"普通","role_right":1}],res)
 })
+app2.use(bodyParser.urlencoded({    
+  extended: true
+}));
+app.use(bodyParser.urlencoded({    
+  extended: true
+}));
+app.post("/user/login",function(req,res,next){
+	res.setHeader("Access-Control-Allow-Origin", "*"); //允许所有域名访问
+	console.log(req.body)
+	userService.login(req.body,res)
+	//res.send({"code":"200"})
+})
+// app2.listen(3002,function(){
+// 	console.log('success 3002')
+// })
 app.get("/tag/add",function(req,res){
 		console.log("----------------/tag/add---------------")
 tagService.insert([{id:1,name:'泛投资',img:'ion-medkit',sel:false},
@@ -28,14 +56,19 @@ tagService.insert([{id:1,name:'泛投资',img:'ion-medkit',sel:false},
   {id:4,name:'医疗健康',img:'ion-medkit',sel:false},
   {id:5,name:'爱游戏',img:'ion-settings',sel:false},
   {id:6,name:'二次元',img:'ion-medkit',sel:false}],res) ;
-res.send('success');
-	
+	res.send('success');
 })
 app.get("/user/register",function(req,res){
 	res.setHeader("Access-Control-Allow-Origin", "*"); //允许所有域名访问
 	console.log("----------------/user/regitser---------------")
 		userService.insert({name:req.query.username,password:req.query.password},res);
 	//res.send(result);
+})
+app.get("/user/securing",function(req,res){//赋予权限
+	var reslut=userService.updateRole({id:req.query.userId,role_id:req.query.roleId},res);
+})
+app.get("/user/updateTable",function(req,res){
+	userService.updateTable(res);
 })
 // app.post("/user/login",function(req,res){
 // res.setHeader("Access-Control-Allow-Origin", "*"); //允许所有域名访问
@@ -128,3 +161,21 @@ io.on('connection', function(socket){
 });
 
 // });
+
+
+function parseJSON(req,res,next){
+    var arr = [];
+    req.on("data",function(data){
+		console.log(arr)
+        arr.push(data);
+    });
+    req.on("end",function(){
+        var data= Buffer.concat(arr).toString(),ret;
+        try{
+            var ret = JSON.parse(data);
+        }catch(err){}
+        req.body = ret;
+        console.log("ret"+ret)
+       // next();
+    })
+}

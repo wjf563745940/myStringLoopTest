@@ -7,11 +7,6 @@
     "validateUpsert": true
   },
   "properties": {
-    "id": {
-      "type": "number",
-      "id": true,
-      "required": true
-    },
     "role_name": {
       "type": "string",
       "required": true,
@@ -19,6 +14,11 @@
     },
     "role_right": {
       "type": "number",
+      "required": true
+    },
+    "id": {
+      "type": "number",
+      "id": true,
       "required": true
     }
   },

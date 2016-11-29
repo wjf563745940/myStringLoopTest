@@ -10,7 +10,6 @@ var tagService= module.exports={
 		var count =datas.length;
 		datas.forEach(function(tag){ 
 				Tag.create(tag,function(err,record){
-
 					if(err) return console.log(err);
 					console.log("record create",record);
 					count--;
