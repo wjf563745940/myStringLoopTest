@@ -24,6 +24,12 @@ var tagService= module.exports={
 					}
 				})
 		})
-	}
+	},
+	getautho:function(req,res,next){
+		console.log("----------get autho---")
+	//var user=req.session.user;
+	//console.log(user.role_id)
+	res.send("success")
+}
 
 };

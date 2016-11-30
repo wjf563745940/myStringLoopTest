@@ -3,9 +3,12 @@ var boot = require('loopback-boot');
 var redis=require("redis");
 var express = require('express');
 var bodyParser = require('body-parser');
+var cookieParser = require('cookie-parser');
+var session = require('express-session');
 //var app2=require("express");
-var app2 = express();
-var app = module.exports = loopback();
+var filter=require("../bin/lib/filter");
+var app = express();
+var app2 = module.exports = loopback();
 var http=require("http").Server(app);
 var io=require("socket.io")(http);
 var roleService=require('../service/roleService');
@@ -13,15 +16,45 @@ var tagService=require('../service/tagService');
 var userService=require('../service/userService');
 var adminService=require("../service/adminService")
 //var Tag=require("../../common/models/tag");
+
+var server = require("../server");
+var Consumer=server.models.consumer;
+app.use(cookieParser());
+app.use(session({
+	secret:'keyboard ca',
+	name:'userx',
+	key:'11',
+	cookie:{secure:false},
+	resave:false,
+	saveUninitialized:false
+}));
+app.use(bodyParser.urlencoded({    
+  extended: true
+}));
 app.use(function(req, res, next){
-  if (req.is('text/*')) {
-    req.text = '';
-    req.setEncoding('utf8');
-    req.on('data', function(chunk){ req.text += chunk });
-    req.on('end', next);
-  } else {
-    next();
-  }
+  // if (req.is('text/*')) {
+  //   req.text = '';
+  //   req.setEncoding('utf8');
+  //   req.on('data', function(chunk){ req.text += chunk });
+  //   req.on('end', next);
+  // } else {
+  //   next();
+  // }
+  res.setHeader("Access-Control-Allow-Origin", "*"); 
+  console.log(req.originalUrl)
+  console.log(req.session)
+	  if(!(req.originalUrl=="/user/login" || req.originalUrl=="/user/autho")){
+	  	if(req.session.user){
+	  	next();
+	  }else{
+	  	res.send({code:999,msg:'请登录'})//可以直接重定向
+	  	// res.redirect("http://127.0.0.1:7779/admin/rego/login.html");
+	  }
+	}else{
+		//userService.login(req,res,next);
+		next();
+	}
+  
 });
 app.get('/', function(req, res){
   res.send('hello world');
@@ -33,16 +66,30 @@ app.get("/role/createTable",function(req,res){
 app.get("/role/add",function(req,res){
 	roleService.insert([{"id":2,"role_name":"普通","role_right":1}],res)
 })
-app2.use(bodyParser.urlencoded({    
-  extended: true
-}));
-app.use(bodyParser.urlencoded({    
-  extended: true
-}));
+// app2.use(bodyParser.urlencoded({    
+//   extended: true
+// }));
+
+app.post("/user/loginout",function(req,res,next){
+userService.loginout(req,res)
+})
+app.post("/user/autho",function(req,res,next){
+	console.log("----------get autho-------")
+	req.session.authos="authos"
+	roleService.getautho(req,res,next);
+	console.log(req.session)
+})
 app.post("/user/login",function(req,res,next){
-	res.setHeader("Access-Control-Allow-Origin", "*"); //允许所有域名访问
-	console.log(req.body)
-	userService.login(req.body,res)
+
+	console.log(req.session.test)
+	req.session.test=111
+	//允许所有域名访问
+	req.session.logins="login"
+	userService.login(req,res,req.session);
+	console.log("login 执行完毕")
+	req.session.b=111;
+	console.log(req.session)
+	req.session.save()
 	//res.send({"code":"200"})
 })
 // app2.listen(3002,function(){
@@ -77,7 +124,7 @@ app.get("/user/updateTable",function(req,res){
 // 		userService.login(null,res);
 // })
 ///注册远程地址
-var Tag=app.models.tag;
+//var Tag=app.models.tag;
 
 //在线用户
 var onlineUsers = {};

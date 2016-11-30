@@ -27,7 +27,6 @@ var tagService= module.exports={
 	insert:function(item,res){
 		// 	dataSource.automigrate('consumer',function(err){
 		// if(err) throw err;
-		
 				Consumer.create(item,function(err,record){
 					if(err) { console.log(err)
 							return err;
@@ -55,23 +54,30 @@ var tagService= module.exports={
 
 				})
 	},
-	login:function(obj,res){
+	login:function(req,res,session){
+		var obj=req.body;
 		console.log("login-------------------...")
 		Consumer.find({where: {name:obj.username,password:obj.password}}
 			,function(err,consumers){
 				if(err){
 					console.log(err)
-				res.send("登录失败")	
+				res.send({"code":401,"msg":"登录失败,服务器响应失败"})	
 			} else{
 				console.log(consumers)
 				if(consumers.length==0){
-					res.send({"msg":"登录失败","data":null})
+					res.send({"code":302,"msg":"登录失败,用户名或密码错误","data":null})
 				}else{
-					res.send({"msg":"登录成功","data":consumers[0]})
+					console.log("登录成")
+					//req.session.user = consumers[0];
+					res.send({"code":200,"msg":"登录成功","data":consumers[0]})
 				}
 				
 			}
 		})
-	}
-};
+	},
+	loginOut:function(req,res){
+		req.session.user=null;
+		res.send({"code":200,"msg":"登出成功","data":null})
+}
 
+}
