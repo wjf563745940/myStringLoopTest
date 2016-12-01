@@ -7,8 +7,8 @@ var cookieParser = require('cookie-parser');
 var session = require('express-session');
 //var app2=require("express");
 var filter=require("../bin/lib/filter");
-var app = express();
-var app2 = module.exports = loopback();
+var app2 = express();
+var app = module.exports = loopback();
 var http=require("http").Server(app);
 var io=require("socket.io")(http);
 var roleService=require('../service/roleService');
@@ -21,16 +21,16 @@ var server = require("../server");
 var Consumer=server.models.consumer;
 app.use(cookieParser());
 app.use(session({
-	secret:'keyboard ca',
-	name:'userx',
-	key:'11',
-	cookie:{secure:false},
-	resave:false,
-	saveUninitialized:false
+  secret: '12345',
+  name: 'name',
+  cookie: {maxAge: 10000},
+  resave: false,
+  saveUninitialized: true,
 }));
 app.use(bodyParser.urlencoded({    
   extended: true
 }));
+
 app.use(function(req, res, next){
   // if (req.is('text/*')) {
   //   req.text = '';
@@ -41,9 +41,12 @@ app.use(function(req, res, next){
   //   next();
   // }
   res.setHeader("Access-Control-Allow-Origin", "*"); 
+   res.header('Access-Control-Allow-Credentials', true);// Allow Cookie
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
   console.log(req.originalUrl)
-  console.log(req.session)
-	  if(!(req.originalUrl=="/user/login" || req.originalUrl=="/user/autho")){
+  console.log(req.session.id)
+	  if(!(req.originalUrl=="/user/login" || req.originalUrl=="/user/autho" || req.originalUrl=="/")){
 	  	if(req.session.user){
 	  	next();
 	  }else{
@@ -56,9 +59,15 @@ app.use(function(req, res, next){
 	}
   
 });
-app.get('/', function(req, res){
-  res.send('hello world');
+app.get("/", function(req, res) {
+  req.session.count = req.session.count || 0;
+  req.session.user={usercont:req.session.count}
+  var n = req.session.count++;
+  res.send('hello, session id:' + req.session.id + ' count:' + n);
 });
+// app.get('/', function(req, res){
+//   res.send('hello world');
+// });
 app.get("/role/createTable",function(req,res){
 	roleService.createTable();
 	res.send('success');
