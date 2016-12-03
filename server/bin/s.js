@@ -4,7 +4,9 @@ var redis=require("redis");
 var express = require('express');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
+
 var session = require('express-session');
+var RedisStore=require("connect-redis")(session);
 //var app2=require("express");
 var filter=require("../bin/lib/filter");
 var app2 = express();
@@ -20,12 +22,45 @@ var adminService=require("../service/adminService")
 var server = require("../server");
 var Consumer=server.models.consumer;
 app.use(cookieParser());
+// app.use(session({//存内存
+//   secret: '12345',
+//   name: 'name',
+//   cookie: {maxAge: 10000},
+//   resave: false,
+//   saveUninitialized: true,
+// }));
+// app.use(session({//存redis
+// 	store:new RedisStore({
+// 		host:'127.0.0.1',
+// 		port:6379,
+// 		db:"test_session"
+// 	}),
+// 	secret:"keybord cat",
+// 	resave: false,
+//     saveUninitialized: true,
+//     cookie:{expires: new Date(Date.now() +10000),maxAge: 10000}
+// }))
+var config={
+"cookie" : {
+   "maxAge" : 10000
+},
+  "sessionStore" : {
+   "host" : "127.0.0.1",
+   "port" : "6379",
+   "pass" : "123456",
+   "db" : 1,
+   "ttl" : 10000,
+   "logErrors" : true
+}
+}
 app.use(session({
-  secret: '12345',
-  name: 'name',
-  cookie: {maxAge: 10000},
-  resave: false,
-  saveUninitialized: true,
+    name : "sid",
+    secret : 'Asecret123-',
+    resave : true,
+    rolling:true,
+    saveUninitialized : false,
+    cookie : config.cookie,
+    //store : new RedisStore(config.sessionStore)
 }));
 app.use(bodyParser.urlencoded({    
   extended: true
@@ -45,7 +80,8 @@ app.use(function(req, res, next){
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
   console.log(req.originalUrl)
-  console.log(req.session.id)
+  console.log(req.session)
+  res.header("P3P","CP=CAO PSA OUR"); 
 	  if(!(req.originalUrl=="/user/login" || req.originalUrl=="/user/autho" || req.originalUrl=="/")){
 	  	if(req.session.user){
 	  	next();
@@ -60,7 +96,10 @@ app.use(function(req, res, next){
   
 });
 app.get("/", function(req, res) {
-  req.session.count = req.session.count || 0;
+	console.log(req.session)
+	console.log('---------session')
+	console.log(session)
+  req.session.count =req.session.count || 0;
   req.session.user={usercont:req.session.count}
   var n = req.session.count++;
   res.send('hello, session id:' + req.session.id + ' count:' + n);
@@ -84,13 +123,14 @@ userService.loginout(req,res)
 })
 app.post("/user/autho",function(req,res,next){
 	console.log("----------get autho-------")
+	console.log(req.session.id)
 	req.session.authos="authos"
 	roleService.getautho(req,res,next);
 	console.log(req.session)
 })
 app.post("/user/login",function(req,res,next){
-
-	console.log(req.session.test)
+console.log("----------get login-------")
+	console.log(req.session.id)
 	req.session.test=111
 	//允许所有域名访问
 	req.session.logins="login"
